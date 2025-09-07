@@ -19,7 +19,6 @@ CONFIG = {
     "base_url": "https://www.hoogvliet.com/",
     "initial_url": "https://www.hoogvliet.com/INTERSHOP/web/WFS/org-webshop-Site/nl_NL/-/EUR/ViewStandardCatalog-Browse?CategoryName=aanbiedingen&CatalogID=schappen",
     "headless": False,
-    "concurrency": 2,
     "timeout": 15,
 }
 
@@ -247,7 +246,6 @@ def main():
     start_time = time.time()
     initial_url = CONFIG['initial_url']
     
-    # --- MODIFICATION: Create output directory ---
     output_dir = 'output'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -256,8 +254,9 @@ def main():
     urls_to_scrape = get_timeframe_urls(initial_url)
     if not urls_to_scrape:
         return
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=CONFIG['concurrency']) as executor:
+    total_products_scraped = 0
+    error_count = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(urls_to_scrape)) as executor:
         future_to_key = {executor.submit(scrape_and_process_worker, info['url'], info): key for key, info in urls_to_scrape.items()}
         
         for future in concurrent.futures.as_completed(future_to_key):
@@ -265,15 +264,19 @@ def main():
             try:
                 products = future.result()
                 if products:
-                    # --- MODIFICATION: Save file inside the 'output' directory ---
+                    total_products_scraped += len(products)
                     filename = os.path.join(output_dir, f"{key}_offers.json")
                     with open(filename, 'w', encoding='utf-8') as f:
                         json.dump(products, f, ensure_ascii=False, indent=2)
                     logging.info(f"Saved {len(products)} products to {filename}")
             except Exception as exc:
                 logging.error(f'{key} offers generated an exception: {exc}')
-
-    logging.info(f"\nScraping done in {time.time() - start_time:.2f} seconds")
+                error_count += 1
+    duration = time.time() - start_time
+    logging.info(f"\n--- SCRAPING SUMMARY ---")
+    logging.info(f"Total products scraped: {total_products_scraped}")
+    logging.info(f"Total errors encountered: {error_count}")
+    logging.info(f"Total duration: {duration:.2f} seconds")
 
 if __name__ == "__main__":
     main()
