@@ -121,6 +121,14 @@ class HoogvlietScraper:
             desc_elem = product_element.find_element(By.CSS_SELECTOR, '.Short-Description')
             product_data['description'] = desc_elem.text.strip()
         except: product_data['description'] = None
+        
+        # --- Logic to find child page URL ---
+        product_data['child_page_url'] = None
+        try:
+            parent_link_elem = product_element.find_element(By.CSS_SELECTOR, '.promotion-btn a.btn')
+            product_data['child_page_url'] = parent_link_elem.get_attribute('href')
+        except NoSuchElementException:
+            pass
             
         return product_data
 
@@ -132,12 +140,18 @@ class HoogvlietScraper:
             self.driver.get(url)
             WebDriverWait(self.driver, CONFIG['timeout']).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.product-list-item')))
             self.scroll_to_load_products(max_scrolls=max_scrolls)
+            
             logging.info("Extracting product information...")
             product_elements = self.driver.find_elements(By.CSS_SELECTOR, '.product-list-item')
+            
             for element in product_elements:
                 product_info = self.extract_product_info(element)
+                
                 if product_info and product_info.get('id'):
+                    if product_info.get('child_page_url'):
+                        logging.info(f"Found parent product '{product_info.get('name')}' with child URL.")
                     products_on_page.append(product_info)
+
             logging.info(f"Successfully scraped {len(products_on_page)} raw products from {url}")
             return products_on_page
         except Exception as e:
@@ -200,6 +214,7 @@ class DataNormalizer:
                 "price_was": self._normalize_price(raw.get('price_was_raw')),
                 "image_url": urljoin(self.base_url, raw.get('image_url')) if raw.get('image_url') else None,
                 "source_url": urljoin(self.base_url, raw.get('source_url')) if raw.get('source_url') else None,
+                "child_page_url": urljoin(self.base_url, raw.get('child_page_url')) if raw.get('child_page_url') else None,
                 "start_date": timeframe_info.get('start_date'),
                 "end_date": timeframe_info.get('end_date'),
                 "child_products": []
@@ -262,6 +277,7 @@ def main():
         return
     total_products_scraped = 0
     error_count = 0
+    # Limiting workers to 2 for stability, as multiple browser instances can be heavy.
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         future_to_key = {executor.submit(scrape_and_process_worker, info['url'], info): key for key, info in urls_to_scrape.items()}
         
