@@ -102,7 +102,7 @@ class HoogvlietScraper:
         
         try:
             price_was_elem = product_element.find_element(By.CSS_SELECTOR, '.strikethrough')
-            product_data['price_was_raw'] = price_was_elem.text.strip()
+            product_data['price_was_raw'] = price_was_elem.get_attribute('innerHTML')
         except: product_data['price_was_raw'] = None
 
         try:
