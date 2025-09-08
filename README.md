@@ -1,26 +1,3 @@
-# Hoogvliet Promotions Scraper
-
-This Python script is designed to scrape all current and upcoming promotional offers from the Hoogvliet supermarket website (`hoogvliet.com`). It operates by launching a headless browser to handle JavaScript-driven content, extracts the product information, normalizes it into a clean JSON format, and saves the results into separate files for current and upcoming offers.
-
-### Features
--   **Concurrent Scraping:** Scrapes both the current and upcoming offer pages simultaneously to improve speed.
--   **Robust Pagination:** Reliably handles the "infinite scroll" mechanism on the category pages.
--   **Data Normalization:** Cleans and formats the scraped data.
--   **Separate Outputs:** Saves current and upcoming promotions into distinct JSON files (`current_offers.json`, `coming_offers.json`) inside an `output/` directory.
-
----
-
-### Research & Approach Summary
-
-*   **Approach:** A headless browser (Selenium) was chosen as the primary scraping tool. The Hoogvliet promotions page relies on JavaScript to dynamically load products as the user scrolls. A simple HTTP request would not be sufficient to get the full list of products, making a browser automation tool necessary.
-*   **Source:** The data is scraped directly from the HTML of the promotions pages. No public API was identified during the initial investigation.
-*   **Pagination:** The scraper handles two levels of "pagination":
-    1.  **Timeframes:** It first identifies the URLs for both the "current" and "upcoming" promotional weeks.
-    2.  **Infinite Scroll:** Within each timeframe page, it simulates a user scrolling to the bottom of the product list to trigger the JavaScript that loads more product tiles until all items are visible.
-*   **Throttling:** A small, configurable delay (`wait_time` in `scroll_to_load_products`) is implemented between scroll actions.
-
----
-
 ### Setup and Execution
 
 **Prerequisites:**
