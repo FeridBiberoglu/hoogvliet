@@ -5,7 +5,7 @@ This Python script is designed to scrape all current and upcoming promotional of
 ### Features
 -   **Concurrent Scraping:** Scrapes both the current and upcoming offer pages simultaneously to improve speed.
 -   **Robust Pagination:** Reliably handles the "infinite scroll" mechanism on the category pages.
--   **Data Normalization:** Cleans and formats the scraped data to match a predefined JSON schema as per the assignment.
+-   **Data Normalization:** Cleans and formats the scraped data.
 -   **Separate Outputs:** Saves current and upcoming promotions into distinct JSON files (`current_offers.json`, `coming_offers.json`) inside an `output/` directory.
 
 ---
@@ -17,7 +17,7 @@ This Python script is designed to scrape all current and upcoming promotional of
 *   **Pagination:** The scraper handles two levels of "pagination":
     1.  **Timeframes:** It first identifies the URLs for both the "current" and "upcoming" promotional weeks.
     2.  **Infinite Scroll:** Within each timeframe page, it simulates a user scrolling to the bottom of the product list to trigger the JavaScript that loads more product tiles until all items are visible.
-*   **Throttling:** A small, configurable delay (`wait_time` in `scroll_to_load_products`) is implemented between scroll actions to avoid overwhelming the server with rapid-fire requests.
+*   **Throttling:** A small, configurable delay (`wait_time` in `scroll_to_load_products`) is implemented between scroll actions.
 
 ---
 

@@ -1,0 +1,17 @@
+-Problem: 
+    Retrieve all current promotions and discounts at Hoogvliet.
+
+I started of looking for an exposed api. Which is available but the output is not very well structured html and the 
+URL: https://www.hoogvliet.com/INTERSHOP/web/WFS/org-webshop-Site/nl_NL/-/EUR/ViewStandardCatalog-GetCategoriesForPromotionPage?PageNumber=2&PageSize=2&LoadMoreProducts=&ListType=&PromotionRange=Aanbiedingen%2B%257C%2B8%2Bseptember%2B-%2B14%2Bseptember&TypeCode=514&SearchParameter=%26%40QueryTerm%3D*%26ContextCategoryUUID%3DGzcKGwJ_2oMAAAFksydTSXaT%26OnlineFlag%3D1%26PromotionRange%3DAanbiedingen%2B%257C%2B10%2Bseptember%2B-%2B16%2Bseptember%26TypeCode%3D514%26%40Sort.CategoryPosition%3D0%26%40Sort.name%3D0%26%40RelevanceSort%3D1%26%40Sort.UUID%3D0
+is pretty complex. Also when first loading the page there are products loaded on the page but there doesn't seem to be an api call made for it.
+So I decided to just scrape the html.
+
+The site doesnt have a "load more" button it only fetches on scroll, which is activated only when the bottom of div.product-list.row is visible.
+So the script auto scrolls to the bottom of that div. Waits a bit, checks if the page height has changed.
+If yes scroll down again. It tries 3 times before shutting down the program.
+
+Problem: The promotions page has promotions for 2 seperate time frames.
+
+When browsing to https://hoogvliet.com/aanbiedingen, you will see the current promos. 
+
+https://www.hoogvliet.com/INTERSHOP/web/WFS/org-webshop-Site/nl_NL/-/EUR/ViewStandardCatalog-Browse?CatalogCategoryID=&SearchParameter=%26%40QueryTerm%3D*%26ContextCategoryUUID%3DGzcKGwJ_2oMAAAFksydTSXaT%26OnlineFlag%3D1%26PromotionRange%3DAanbiedingen%2B%257C%2B10%2Bseptember%2B-%2B16%2Bseptember%26TypeCode%3D514%26%40Sort.CategoryPosition%3D0%26%40Sort.name%3D0%26%40RelevanceSort%3D1%26%40Sort.UUID%3D0&PageSize=99%2C999&SortingAttribute=&CategoryName=aanbiedingen&CatalogID=schappen

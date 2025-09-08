@@ -18,7 +18,7 @@ import concurrent.futures
 CONFIG = {
     "base_url": "https://www.hoogvliet.com/",
     "initial_url": "https://www.hoogvliet.com/INTERSHOP/web/WFS/org-webshop-Site/nl_NL/-/EUR/ViewStandardCatalog-Browse?CategoryName=aanbiedingen&CatalogID=schappen",
-    "headless": False,
+    "headless": True,
     "timeout": 15,
 }
 
@@ -48,23 +48,33 @@ class HoogvlietScraper:
         scrolls = 0
         no_change_count = 0
         while scrolls < max_scrolls:
-            try:
-                product_list_element = self.driver.find_element(By.CSS_SELECTOR, 'div.product-list.row')
-                self.driver.execute_script("arguments[0].scrollIntoView(false);", product_list_element)
-            except NoSuchElementException:
-                logging.warning("Could not find product list element to scroll to. Breaking.")
-                break
+            last_height = self.driver.execute_script("return document.body.scrollHeight")
+            if no_change_count == 0:
+                try:
+                    product_list_element = self.driver.find_element(By.CSS_SELECTOR, 'div.product-list.row')
+                    self.driver.execute_script("arguments[0].scrollIntoView(false);", product_list_element)
+                except NoSuchElementException:
+                    logging.warning("Could not find product list element to scroll to. Breaking.")
+                    break
+            elif no_change_count == 1:
+                logging.info("Page height hasn't changed. Scrolling down 200 pixels.")
+                self.driver.execute_script("window.scrollBy(0, 200);")
+            elif no_change_count == 2:
+                logging.info("Page height hasn't changed. Scrolling up 400 pixels.")
+                self.driver.execute_script("window.scrollBy(0, -400);")
+                
             time.sleep(wait_time)
+
             new_height = self.driver.execute_script("return document.body.scrollHeight")
             if new_height == last_height:
                 no_change_count += 1
                 if no_change_count >= 3:
-                    logging.info("Page height hasn't changed after 3 scrolls. Assuming all products are loaded.")
+                    logging.info("Page height hasn't changed after nudging. Assuming all products are loaded.")
                     break
             else:
-                no_change_count = 0
-            last_height = new_height
+                no_change_count = 0  
             scrolls += 1
+            
         logging.info(f"Finished scrolling after {scrolls} attempts.")
 
     def extract_product_info(self, product_element):
@@ -121,11 +131,6 @@ class HoogvlietScraper:
             logging.info(f"Loading page: {url}")
             self.driver.get(url)
             WebDriverWait(self.driver, CONFIG['timeout']).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.product-list-item')))
-            try:
-                cookie_button = self.driver.find_element(By.ID, 'onetrust-accept-btn-handler')
-                cookie_button.click()
-                time.sleep(1)
-            except: pass
             self.scroll_to_load_products(max_scrolls=max_scrolls)
             logging.info("Extracting product information...")
             product_elements = self.driver.find_elements(By.CSS_SELECTOR, '.product-list-item')
@@ -253,10 +258,11 @@ def main():
 
     urls_to_scrape = get_timeframe_urls(initial_url)
     if not urls_to_scrape:
+        print("No urls to scrape")
         return
     total_products_scraped = 0
     error_count = 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(urls_to_scrape)) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         future_to_key = {executor.submit(scrape_and_process_worker, info['url'], info): key for key, info in urls_to_scrape.items()}
         
         for future in concurrent.futures.as_completed(future_to_key):

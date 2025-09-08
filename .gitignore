@@ -10,3 +10,5 @@ __pycache__/
 
 # Output directory for scraped data
 output/
+
+.gitignore
